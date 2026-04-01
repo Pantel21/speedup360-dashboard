@@ -1046,6 +1046,390 @@ const prozessSchritte: ProzessSchritt[] = [
   { id: 'fu5', tp: 'Follow-up', phase: 'Follow-up', wer: 'auto', was: 'Reaktivierung bei Inaktivitaet', wo: 'n8n + E-Mail', dauer: 'Automatisch', details: 'E-Mail-Sequenz: "Wir haben noch nicht gehoert..." — Erneute Diagnose anbieten', tagLabel: 'Tag 180+', digital: true, vorOrt: true },
 ]
 
+/* Detaillierte Schritt-Beschreibungen: Ziel + Anleitung */
+const schrittDetails: Record<string, { ziel: string; anleitung: string[] }> = {
+  // TP1: Vorbereitung
+  v1: {
+    ziel: 'Sicherstellen, dass der richtige Kunde das passende Produkt bekommt und ein Trainer zugewiesen ist.',
+    anleitung: [
+      'Lead im Zoho CRM oeffnen und Kontaktdaten pruefen',
+      'Persona-Zuordnung (P01-P06) anhand des Erstgespraeches festlegen',
+      'Budget, Bereitschaft und Standort bewerten → Digital oder Vor-Ort empfehlen',
+      'Trainer zuweisen (Region + Kapazitaet beachten)',
+      'Status im CRM auf "Qualifiziert" setzen und Produkt-Variante eintragen',
+    ]
+  },
+  v2: {
+    ziel: 'Dem Kunden sofort alle notwendigen Unterlagen zusenden, damit der Prozess starten kann.',
+    anleitung: [
+      'Wird automatisch durch n8n ausgeloest sobald CRM-Status auf "Qualifiziert" steht',
+      'E-Mail enthaelt: Terminbestaetigung, AVV nach Art. 28 DSGVO, Upload-Link (Digital) oder Reiseinfos (Vor-Ort)',
+      'Pruefen: Wurde die E-Mail erfolgreich zugestellt? (n8n-Log checken)',
+    ]
+  },
+  v3: {
+    ziel: 'Rechtliche Absicherung — keine Datenverarbeitung ohne unterzeichnete AVV.',
+    anleitung: [
+      'Im E-Mail-Postfach pruefen ob die unterschriebene AVV zurueckgekommen ist',
+      'Falls nicht: Erinnerung nach 2 Tagen senden',
+      'AVV im CRM-Kontakt hinterlegen (Anhang)',
+      'Rechnung vorbereiten und zur Freigabe bereitstellen',
+    ]
+  },
+  v4: {
+    ziel: 'Alle relevanten Salon-Daten VOR der Analyse einsammeln, damit die KI und der Berater vorbereitet sind.',
+    anleitung: [
+      'Wird automatisch durch n8n 5 Tage vor dem Analysetermin gesendet',
+      'Fragebogen besteht aus 2 Teilen: Harte Fakten (~15 Min, z.B. Umsatz, MA-Zahl) + Weiche Faktoren (~20 Min, z.B. Fuehrungsstil)',
+      'Der Salon fuellt selbst aus — kein Berater-Aufwand',
+      'Bei Nicht-Ausfuellen: Automatische Erinnerung nach 2 Tagen',
+    ]
+  },
+  v5: {
+    ziel: 'Erste datenbasierte Einschaetzung des Salons erstellen, bevor der Berater aktiv wird.',
+    anleitung: [
+      'KI-Agent liest automatisch die eingegangenen Fragebogen-Daten aus Supabase',
+      'Analysiert: Stammdata, Umsatztrends, Teamstruktur, Fragebogen-Antworten',
+      'Erstellt ein Vorab-Profil mit ersten Auffaelligkeiten und Hypothesen',
+      'Ergebnis steht dem Berater im Dashboard zur Verfuegung',
+    ]
+  },
+  v6: {
+    ziel: 'Der Berater ist vollstaendig vorbereitet und hat alle Materialien griffbereit.',
+    anleitung: [
+      'SpeedUp360 Analyse-Template in Notion oeffnen und Salon-Daten eintragen',
+      '6-KF-Scoring-Bogen vorbereiten (leer oder mit KI-Vorab-Daten)',
+      'Interview-Leitfaden durchgehen und salon-spezifische Fragen notieren',
+      'Digital: Zoom-Link erstellen und testen, Screen-Sharing vorbereiten',
+      'Vor-Ort: Materialien-Checkliste pruefen (Tablet, Leitfaden, Visitenkarten)',
+    ]
+  },
+  v6b: {
+    ziel: 'Reibungslose Anreise sicherstellen — keine Zeitverluste am Analysetag.',
+    anleitung: [
+      'Google Maps Route pruefen und Fahrtzeit + Puffer einplanen',
+      'Bei > 2h Anfahrt: Hotel buchen (Abend vorher anreisen)',
+      'Zeitplanung: 6h-Block plus 30 Min Puffer vor und nach dem Termin',
+      'Parkmoeglichkeiten am Salon pruefen',
+    ]
+  },
+
+  // TP2: Analyse
+  a1: {
+    ziel: 'Ersten persoenlichen Eindruck gewinnen und Vertrauen zum Team aufbauen.',
+    anleitung: [
+      'Persoenlich vorstellen — Name, Rolle, was heute passiert',
+      'Salon-Rundgang: Jeden Arbeitsplatz, Rezeption, Lager, Pausenraum anschauen',
+      'Atmosphaere-Notizen machen: Sauberkeit, Musik, Geruch, Lichtverhaeltnisse',
+      'Teamdynamik beobachten: Wer spricht mit wem? Wie ist die Stimmung?',
+      'Small Talk mit Mitarbeitern — NICHT sofort analysieren, erst ankommen',
+    ]
+  },
+  a1d: {
+    ziel: 'Kassendaten strukturiert auswerten, damit Zahlen fuer die Analyse bereitstehen.',
+    anleitung: [
+      'KI-Pipeline empfaengt automatisch hochgeladene CSV/PDF-Dateien',
+      'OCR-Extraktion: Erkennt Dokumenttyp (BWA, Preisliste, MA-Umsatz)',
+      'Klassifikation und Normalisierung der Daten',
+      'Ergebnisse werden in Supabase gespeichert und im Dashboard angezeigt',
+      'Bei Fehlern: Berater wird benachrichtigt zur manuellen Nachbearbeitung',
+    ]
+  },
+  a2: {
+    ziel: 'Die wahren Ziele, Probleme und die Vision des Inhabers verstehen — nicht nur Zahlen.',
+    anleitung: [
+      'Leitfaden-Interview starten (45-60 Min)',
+      'Fragen: "Was laeuft gut?", "Was frustriert Sie am meisten?", "Wo sehen Sie sich in 3 Jahren?"',
+      'Pain Points aktiv identifizieren und priorisieren',
+      'WICHTIG: Zuhoeren, nicht beraten! Notizen machen, nicht bewerten',
+      'Am Ende zusammenfassen: "Habe ich richtig verstanden, dass...?"',
+    ]
+  },
+  a3: {
+    ziel: 'Strategie, Marketing und Kundenservice des Salons systematisch bewerten.',
+    anleitung: [
+      'KF1 Strategie: Ist die Positionierung klar? Wer ist die Zielgruppe? USP vorhanden?',
+      'KF2 Marketing: Google-Bewertung checken, Social Media Praesenz bewerten, Online-Buchung vorhanden?',
+      'KF3 Kunden: Wiederkehrrate erfragen, Beschwerdemanagement pruefen, Serviceerlebnis beobachten',
+      'Digital-Variante: Alles datenbasiert ueber Fragebogen + Online-Recherche statt Beobachtung',
+      'Scoring 1-10 fuer jedes Kompetenzfeld eintragen',
+    ]
+  },
+  a4: {
+    ziel: 'Fuehrung, Wirtschaftlichkeit und Prozessreife des Salons systematisch bewerten.',
+    anleitung: [
+      'KF4 Fuehrung: Delegationsklarheit pruefen, Feedback-Kultur erfragen, Konfliktmanagement',
+      'KF5 Wirtschaft: BWA-Analyse (Personalquote, Rohertrag, Umsatz/Kopf), Preisstruktur pruefen',
+      'KF6 Prozesse: Digitalisierungsgrad, SOPs vorhanden?, Tagesablauf strukturiert?',
+      'Digital-Variante: BWA + KPI-Upload auswerten statt Beobachtung',
+      'Scoring 1-10 fuer jedes Kompetenzfeld eintragen',
+    ]
+  },
+  a5: {
+    ziel: 'Finanzielle Ist-Situation exakt erfassen — Minutenpreis und Preisstruktur als Kern-KPI.',
+    anleitung: [
+      'Kassendaten gemeinsam mit Inhaber durchgehen',
+      'IST-Minutenpreis berechnen: Umsatz / produktive Minuten',
+      'Preisstruktur-Gaps identifizieren: Welche DL sind zu guenstig?',
+      'Rechencheck: Stimmen Kassendaten mit BWA ueberein?',
+      'Ergebnisse dokumentieren und mit Benchmark vergleichen',
+    ]
+  },
+  a6: {
+    ziel: 'Dem Inhaber erste Erkenntnisse geben und realistische Erwartungen fuer den Bericht setzen.',
+    anleitung: [
+      'Die 3 wichtigsten Erkenntnisse des Tages praesentieren',
+      'Quick-Wins benennen: "Das koennen Sie sofort aendern"',
+      'Zeitrahmen fuer den fertigen Bericht kommunizieren (3-5 Werktage)',
+      'Offene Fragen des Inhabers beantworten',
+      'Verabschiedung: Positiv enden, Motivation geben',
+    ]
+  },
+  a6d: {
+    ziel: 'Automatische KI-Ergebnisse auf Plausibilitaet pruefen und mit Berater-Kontext anreichern.',
+    anleitung: [
+      'KI-Dashboard oeffnen und generierte Scores reviewen',
+      'Automatische Auswertung mit eigenen Einschaetzungen abgleichen',
+      'Fehlende Daten manuell ergaenzen (z.B. qualitative Beobachtungen)',
+      'Kontext hinzufuegen: Was die KI nicht sehen kann (Atmosphaere, Teamdynamik)',
+      'Scores ggf. korrigieren und Aenderungen begruenden',
+    ]
+  },
+
+  // TP3: Berichterstellung
+  b1: {
+    ziel: 'Alle Erkenntnisse sichern, bevor Details vergessen werden.',
+    anleitung: [
+      'Direkt nach der Analyse (idealer Zeitpunkt: im Auto / nach dem Termin)',
+      'Voice-Memo aufnehmen: Wichtigste Einschaetzungen, Auffaelligkeiten, Emotionen',
+      'Stichpunkte zu jedem KF notieren',
+      'Besondere Zitate oder Aussagen des Inhabers festhalten',
+      'Digital: Notizen aus Video-Call zusammenfassen und strukturieren',
+    ]
+  },
+  b2: {
+    ziel: 'Vollstaendige, datenbasierte Analyse mit allen KI-Agents erstellen.',
+    anleitung: [
+      'Laeuft automatisch ueber die KI-Pipeline auf Hetzner',
+      'SpeedUp360 Agent: Erstellt 6-KF-Scoring + Gap-Analyse + Radar-Chart',
+      'BWA Agent: Analysiert Kennzahlen und erzeugt Ampel-Darstellung',
+      'Preiskalkulations-Agent: Berechnet optimalen Minutenpreis + SOLL-Preisliste',
+      'Positionierungs-Agent: Bewertet USP und Marktposition',
+      'Alle Ergebnisse fliessen automatisch in den Berichts-Entwurf',
+    ]
+  },
+  b3: {
+    ziel: 'Sicherstellen, dass der Bericht korrekt, vollstaendig und fuer den Kunden verstaendlich ist.',
+    anleitung: [
+      'KI-generierten Bericht im Dashboard oeffnen',
+      'Jeden KF-Score pruefen: Stimmt die Bewertung mit meiner Einschaetzung ueberein?',
+      'Benchmark-Werte validieren: Sind die Vergleichsdaten realistisch?',
+      'Kontext ergaenzen: Qualitative Beobachtungen, die die KI nicht hat',
+      'Bericht freigeben → loest automatisch die PDF-Generierung aus',
+    ]
+  },
+  b4: {
+    ziel: 'Professionellen Bericht im Corporate Design generieren, bereit fuer den Kunden.',
+    anleitung: [
+      'Wird automatisch ausgeloest nach Berater-Freigabe',
+      'DocGen erstellt PDF (20-25 Seiten) mit: Radar-Chart, KF-Scores, Gap-Matrix, Massnahmenvorschlaege',
+      'Corporate-Design wird automatisch angewendet',
+      'PDF wird im CRM beim Kontakt hinterlegt',
+      'Berater erhaelt Benachrichtigung wenn PDF fertig ist',
+    ]
+  },
+
+  // TP4: Massnahmenplan
+  m1: {
+    ziel: 'Die 3 wirkungsvollsten Hebel identifizieren, die den groessten Unterschied machen.',
+    anleitung: [
+      'Gap-Analyse-Ergebnisse oeffnen: Welche KFs haben die groessten Deltas?',
+      'Impact x Machbarkeit Matrix erstellen: Was bringt viel UND ist umsetzbar?',
+      'Top 3 Massnahmen auswaehlen und priorisieren',
+      'Verantwortungsmatrix erstellen: Wer macht was? (Salon / Salonimpuls / Extern)',
+      'Realitaetscheck: Kann der Salon das personell und finanziell stemmen?',
+    ]
+  },
+  m2: {
+    ziel: 'Messbare Ziele und einen konkreten 90-Tage-Fahrplan erstellen.',
+    anleitung: [
+      'Fuer jede Massnahme KPIs definieren: Finanziell (Umsatz, Bon), Operativ (Auslastung), Qualitativ (NPS)',
+      '90-Tage-Plan strukturieren: Woche 1-4 (Quick Wins), Woche 5-8 (Aufbau), Woche 9-12 (Festigung)',
+      'Meilensteine mit konkreten Daten versehen',
+      'Plan im Zoho CRM als Massnahmenplan hinterlegen',
+      'Vorlage: Je Massnahme → Ziel → KPI → Verantwortlich → Deadline → Status',
+    ]
+  },
+  m3: {
+    ziel: 'Qualitaetssicherung — sicherstellen, dass der Plan realistisch und lieferbar ist.',
+    anleitung: [
+      'Massnahmenplan auf Plausibilitaet pruefen',
+      'Delivery-Kapazitaet checken: Haben wir die Ressourcen fuer die Begleitung?',
+      'Bei Gate-Score < 4: Eskalation an Senior Consultant, erweitertes Review',
+      'Freigabe erteilen oder Anpassungen einfordern',
+    ]
+  },
+
+  // TP5: Abschlussgespraech
+  g1: {
+    ziel: 'Persoenliche Verbindung aufbauen — der Inhaber soll sich verstanden fuehlen, nicht bewertet.',
+    anleitung: [
+      'Persoenliche Begruessung — auf den Inhaber eingehen',
+      'WICHTIG: Bericht NICHT vorab per E-Mail senden! Erst gemeinsam durchgehen',
+      'Offene Atmosphaere schaffen: "Heute ist Ihr Tag, wir schauen gemeinsam auf die Ergebnisse"',
+      'Kurz den Ablauf erklaeren: Ergebnisse → Ziele → Massnahmen → naechste Schritte',
+      'Digital: Zoom-Call, Kamera an, Screen-Sharing vorbereitet',
+    ]
+  },
+  g2: {
+    ziel: 'Dem Inhaber klar und visuell zeigen, wo sein Salon steht — ohne zu ueberwaeltigen.',
+    anleitung: [
+      'Screen-Sharing starten: Radar-Chart als Einstieg',
+      'Jeden KF-Score erklaeren: "Hier stehen Sie bei X, der Branchenschnitt liegt bei Y"',
+      'Benchmark-Vergleich zeigen: Wo ist der Salon besser, wo schlechter?',
+      'Reaktionen des Inhabers beobachten: Ueberraschung? Zustimmung? Widerstand?',
+      'Nicht alles auf einmal — Pausen lassen fuer Fragen',
+    ]
+  },
+  g3: {
+    ziel: 'Die persoenliche Vision des Inhabers verstehen — das ist die Basis fuer jeden Massnahmenplan.',
+    anleitung: [
+      'Offene Frage: "Was wollen Sie wirklich erreichen in den naechsten 12 Monaten?"',
+      '3x "Warum?" fragen — um zum Kern der Motivation vorzudringen',
+      'WICHTIG: Verstehen, nicht analysieren! Zuhoeren und mitschreiben',
+      'Vision mit den Analyse-Ergebnissen verknuepfen: "Dafuer muessten wir hier ansetzen..."',
+      'Gemeinsames Zielbild formulieren',
+    ]
+  },
+  g4: {
+    ziel: 'Gemeinsam mit dem Inhaber die wichtigsten Massnahmen festlegen — er entscheidet, nicht wir.',
+    anleitung: [
+      'KI-generierte Massnahmenvorschlaege zeigen (Top 5)',
+      'Gemeinsam priorisieren: "Welche 3 haben fuer Sie die hoechste Prioritaet?"',
+      'Fuer jede Massnahme: Konkret erklaeren was zu tun ist und was es bringt',
+      'Timeline gemeinsam festlegen: "Bis wann ist das realistisch?"',
+      'Inhaber entscheidet — wir empfehlen, er waehlt',
+    ]
+  },
+  g5: {
+    ziel: 'Passende Begleitung anbieten — authentisch und ohne Verkaufsdruck.',
+    anleitung: [
+      'Basierend auf Massnahmen das passende SI-Paket empfehlen',
+      'Quick Fix noetig → Coaching empfehlen',
+      'Breite Entwicklung → Campus + Coaching empfehlen',
+      'Langfristige Transformation → Master-Begleitung empfehlen',
+      'WICHTIG: Kein Druck! "Das ist meine Empfehlung, Sie entscheiden"',
+      'Angebot wird nach dem Gespraech automatisch erstellt und zugesendet',
+    ]
+  },
+
+  // TP6: Folgeangebot
+  f1: {
+    ziel: 'Dem Kunden unmittelbar nach dem Gespraech alle Unterlagen bereitstellen.',
+    anleitung: [
+      'Wird automatisch ausgeloest nach Gespraechsende (n8n-Workflow)',
+      'E-Mail enthaelt: PDF-Bericht (20-25 Seiten) + Massnahmenplan als Attachment',
+      'Betreff und Text sind personalisiert mit Salon-Name',
+      'Versand innerhalb von 2 Stunden nach Gespraechsende',
+      'Pruefen: E-Mail-Zustellung erfolgreich? (n8n-Log)',
+    ]
+  },
+  f2: {
+    ziel: 'Automatisch ein passendes Angebot generieren, das auf den Salon zugeschnitten ist.',
+    anleitung: [
+      'n8n liest Persona-Typ + Massnahmen aus dem CRM',
+      'Angebots-Logik: Quick Fix → Coaching-Angebot / Breit → Campus+Coaching / Lang → Master',
+      'Angebot wird automatisch in Zoho erstellt mit korrekten Preisen und Konditionen',
+      'Berater erhaelt Benachrichtigung zur finalen Pruefung',
+      'Versand erst nach manueller Freigabe durch Berater',
+    ]
+  },
+  f3: {
+    ziel: 'Automatisches Angebot personalisieren und an den Kunden senden.',
+    anleitung: [
+      'Automatisch generiertes Angebot in Zoho oeffnen',
+      'Pruefen: Stimmen Produkt, Preis und Konditionen?',
+      'Persoenliche Notiz ergaenzen (Bezug auf Gespraech)',
+      'Angebot per E-Mail an Kunden senden',
+      'Follow-up Datum im CRM setzen (7 Tage)',
+    ]
+  },
+  f4: {
+    ziel: 'Offene Fragen klaeren und den Kunden bei der Entscheidung unterstuetzen.',
+    anleitung: [
+      'Lea oder Simone rufen den Kunden an (Tag 8-10 nach Gespraech)',
+      'Fragen: "Haben Sie den Bericht gelesen? Gibt es Fragen?"',
+      '"Gibt es Unklarheiten zum Angebot?"',
+      'Bei Einwaenden: Notieren und an Berater/Sales weiterleiten',
+      'Bei Interesse: Termin fuer Vertragsgespraech vereinbaren',
+    ]
+  },
+  f5: {
+    ziel: 'Bei Zusage den Vertrag schnell und professionell abwickeln.',
+    anleitung: [
+      'Vertrag aus der Vorlage erstellen (Zoho)',
+      'Konditionen wie im Angebot uebernehmen',
+      'Vertrag per E-Mail an Kunden zur Unterschrift senden',
+      'Nach Ruecklauf: Rechnung erstellen und versenden',
+      'Kickoff-Termin planen und im CRM hinterlegen',
+    ]
+  },
+
+  // Follow-up
+  fu1: {
+    ziel: 'Den Kunden an die Umsetzung erinnern und Motivation aufrechterhalten.',
+    anleitung: [
+      'Automatischer Versand 14 Tage nach der Analyse',
+      'E-Mail: "Wie laeuft die Umsetzung der Massnahmen?"',
+      'WhatsApp Impuls: Kurze motivierende Nachricht + Quick-Tipp',
+      'Bei offenen Angeboten: Erinnerung an das Angebot integriert',
+      'Antworten werden im CRM protokolliert',
+    ]
+  },
+  fu2: {
+    ziel: 'Automatisch einen Kontrolltermin buchen, damit der Salon nicht "vergessen" wird.',
+    anleitung: [
+      'n8n loest 30 Tage nach Analyse einen Cal.com-Buchungslink aus',
+      'Kunde erhaelt E-Mail mit Terminvorschlaegen',
+      'Bei Buchung: Termin wird automatisch im CRM eingetragen',
+      'Bei Nicht-Buchung: Erinnerung nach 5 Tagen',
+      'Termin-Inhalt: Umsetzungsstatus pruefen, Blockaden loesen',
+    ]
+  },
+  fu3: {
+    ziel: 'Aktiv pruefen ob der Salon die Massnahmen umsetzt und bei Problemen helfen.',
+    anleitung: [
+      'Lea oder Simone fuehren den Follow-up Call (30 Min)',
+      'Checkliste: Welche Massnahmen wurden umgesetzt? (0-100%)',
+      'Wo hakt es? Typische Blockaden: Zeit, Geld, Team-Widerstand',
+      'Konkrete Hilfe anbieten: Ressourcen, Templates, Kontakte',
+      'Umsetzungsstatus im CRM aktualisieren',
+      'Bei < 30% Umsetzung: Eskalation an Berater',
+    ]
+  },
+  fu4: {
+    ziel: 'Messbare Ergebnisse erfassen — beweisen, dass SpeedUp360 wirkt.',
+    anleitung: [
+      'Automatischer Fragebogen 90 Tage nach Analyse',
+      'Erfasst: Durchschnittsbon vorher/nachher, Rebooking-Quote, Umsatz',
+      'ROI-Berechnung: (Umsatzsteigerung - Investition) / Investition',
+      'Ergebnisse werden automatisch im CRM gespeichert',
+      'Positive Ergebnisse → Testimonial anfragen, Case Study erstellen',
+    ]
+  },
+  fu5: {
+    ziel: 'Inaktive Kunden reaktivieren und erneut ins Gespraech bringen.',
+    anleitung: [
+      'Automatische E-Mail-Sequenz nach 180 Tagen ohne Kontakt',
+      'Sequenz: 3 E-Mails ueber 3 Wochen mit steigendem Mehrwert',
+      'E-Mail 1: "Wir haben lange nichts gehoert — wie geht es Ihrem Salon?"',
+      'E-Mail 2: Branchen-Insight oder neues Feature teilen',
+      'E-Mail 3: Erneute Diagnose kostenlos oder vergünstigt anbieten',
+      'Bei Reaktion: Lead erneut qualifizieren (zurueck zu v1)',
+    ]
+  },
+}
+
 const phasenFarben: Record<string, { bg: string; border: string; text: string; headerBg: string }> = {
   'Vorbereitung': { bg: 'bg-indigo-50', border: 'border-indigo-300', text: 'text-indigo-700', headerBg: 'bg-indigo-100' },
   'Analyse': { bg: 'bg-blue-50', border: 'border-blue-300', text: 'text-blue-700', headerBg: 'bg-blue-100' },
@@ -1059,6 +1443,7 @@ const phasenFarben: Record<string, { bg: string; border: string; text: string; h
 function AblaufTab() {
   const [variante, setVariante] = useState<'digital' | 'vorOrt'>('digital')
   const [expandedPhase, setExpandedPhase] = useState<string | null>(null)
+  const [expandedStep, setExpandedStep] = useState<string | null>(null)
 
   const filteredSchritte = prozessSchritte.filter(s =>
     variante === 'digital' ? s.digital : s.vorOrt
@@ -1195,21 +1580,32 @@ function AblaufTab() {
                   if (!rolle) return null
                   const auto = isAutomated(schritt)
                   const style = auto ? autoStyle : manualStyle
+                  const detail = schrittDetails[schritt.id]
+                  const isStepExpanded = expandedStep === schritt.id
                   return (
                     <div key={schritt.id} className={`px-4 py-3 ${style.rowBg} hover:brightness-[0.98] transition-colors`}>
                       <div className="flex items-start gap-3">
-                        {/* Schritt-Nummer */}
+                        {/* Schritt-Nummer — klickbar */}
                         <div className="flex flex-col items-center shrink-0">
-                          <div className={`w-7 h-7 rounded-full ${style.circle} text-white flex items-center justify-center text-[10px] font-bold`}>
+                          <button
+                            onClick={() => setExpandedStep(isStepExpanded ? null : schritt.id)}
+                            title="Klicke fuer Details: Ziel & Anleitung"
+                            className={`w-7 h-7 rounded-full ${style.circle} text-white flex items-center justify-center text-[10px] font-bold cursor-pointer hover:ring-2 hover:ring-offset-1 ${auto ? 'hover:ring-emerald-300' : 'hover:ring-slate-300'} transition-all ${isStepExpanded ? (auto ? 'ring-2 ring-emerald-400 ring-offset-1' : 'ring-2 ring-slate-400 ring-offset-1') : ''}`}
+                          >
                             {auto ? <Bot className="w-3.5 h-3.5" /> : idx + 1}
-                          </div>
+                          </button>
                           {idx < phasenSchritte.length - 1 && <div className="w-0.5 h-4 bg-gray-200 mt-1" />}
                         </div>
 
                         {/* Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`text-sm font-medium ${auto ? 'text-emerald-800' : 'text-gray-900'}`}>{schritt.was}</span>
+                            <button
+                              onClick={() => setExpandedStep(isStepExpanded ? null : schritt.id)}
+                              className={`text-sm font-medium text-left hover:underline cursor-pointer ${auto ? 'text-emerald-800' : 'text-gray-900'}`}
+                            >
+                              {schritt.was}
+                            </button>
                             {auto && (
                               <Badge className="text-[9px] bg-emerald-100 text-emerald-700 border border-emerald-200">
                                 Automatisiert
@@ -1220,8 +1616,44 @@ function AblaufTab() {
                                 Digital: {schritt.digitalVariante}
                               </Badge>
                             )}
+                            {detail && (
+                              <button
+                                onClick={() => setExpandedStep(isStepExpanded ? null : schritt.id)}
+                                className={`text-[9px] px-1.5 py-0.5 rounded cursor-pointer transition-colors ${isStepExpanded ? 'bg-blue-200 text-blue-800' : 'bg-blue-50 text-blue-500 hover:bg-blue-100'}`}
+                              >
+                                {isStepExpanded ? 'Anleitung ausblenden ▲' : 'Anleitung anzeigen ▼'}
+                              </button>
+                            )}
                           </div>
                           <p className="text-xs text-gray-500 mt-0.5">{schritt.details}</p>
+
+                          {/* Aufgeklappte Detail-Ansicht */}
+                          {isStepExpanded && detail && (
+                            <div className="mt-3 p-3 rounded-lg border bg-white shadow-sm space-y-3">
+                              <div>
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <Target className="w-3.5 h-3.5 text-blue-500" />
+                                  <span className="text-xs font-semibold text-blue-700">Ziel dieses Schritts</span>
+                                </div>
+                                <p className="text-xs text-gray-700 leading-relaxed">{detail.ziel}</p>
+                              </div>
+                              <Separator />
+                              <div>
+                                <div className="flex items-center gap-1.5 mb-2">
+                                  <ClipboardList className="w-3.5 h-3.5 text-violet-500" />
+                                  <span className="text-xs font-semibold text-violet-700">So wird's gemacht</span>
+                                </div>
+                                <div className="space-y-1.5">
+                                  {detail.anleitung.map((step, i) => (
+                                    <div key={i} className="flex items-start gap-2">
+                                      <span className="text-[10px] font-bold text-violet-400 mt-0.5 shrink-0 w-4 text-right">{i + 1}.</span>
+                                      <span className="text-xs text-gray-600 leading-relaxed">{step}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
 
                           {/* Meta-Infos */}
                           <div className="flex flex-wrap gap-3 mt-2">

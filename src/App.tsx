@@ -14,7 +14,9 @@ import {
   ArrowRight, CheckCircle2, Clock, Euro,
   Monitor, MapPin, Bot, FileText, TrendingUp, Shield,
   Workflow, Bell, UserCheck, ShoppingCart, Activity, Gauge,
-  ChevronRight, Star, Building2, Sparkles
+  ChevronRight, Star, Building2, Sparkles,
+  GitBranch, Calendar, Send,
+  Laptop, Home, PlayCircle
 } from 'lucide-react'
 
 /* ───────────────────────── DATA ───────────────────────── */
@@ -962,6 +964,321 @@ function ProzessTab() {
   )
 }
 
+/* ───────────────────── TAB 5: ABLAUFPLAN (SWIMLANE) ───────────────────── */
+
+const swimlaneRollen = [
+  { id: 'tobias', name: 'Tobias', rolle: 'Trainer / Field Consultant', color: 'bg-blue-500', lightBg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700' },
+  { id: 'joern', name: 'Joern / Dominik', rolle: 'Senior Consultant / Sales', color: 'bg-violet-500', lightBg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-700' },
+  { id: 'ki', name: 'KI-Agents', rolle: 'Automatisierte Analyse', color: 'bg-emerald-500', lightBg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' },
+  { id: 'katrin', name: 'Katrin', rolle: 'PM Revenue', color: 'bg-amber-500', lightBg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700' },
+  { id: 'cs', name: 'Lea / Simone', rolle: 'Customer Success', color: 'bg-pink-500', lightBg: 'bg-pink-50', border: 'border-pink-200', text: 'text-pink-700' },
+  { id: 'nadja', name: 'Nadja', rolle: 'Finance', color: 'bg-slate-500', lightBg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-700' },
+  { id: 'mo', name: 'Mo + Gabriel', rolle: 'Automation Manager', color: 'bg-cyan-500', lightBg: 'bg-cyan-50', border: 'border-cyan-200', text: 'text-cyan-700' },
+  { id: 'auto', name: 'n8n / System', rolle: 'Automatisierung', color: 'bg-gray-500', lightBg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-700' },
+]
+
+type ProzessSchritt = {
+  id: string
+  tp: string
+  phase: string
+  wer: string
+  was: string
+  wo: string
+  dauer: string
+  details: string
+  handoff?: string
+  tagLabel: string
+  digital: boolean
+  vorOrt: boolean
+  digitalVariante?: string
+}
+
+const prozessSchritte: ProzessSchritt[] = [
+  // TP1: Vorbereitung
+  { id: 'v1', tp: 'TP1', phase: 'Vorbereitung', wer: 'katrin', was: 'Lead qualifizieren & Produkt zuordnen', wo: 'Zoho CRM', dauer: '15 Min', details: 'Persona-Zuordnung (P01-P06), Digital oder Vor-Ort entscheiden, Trainer zuweisen', tagLabel: 'Tag -7', digital: true, vorOrt: true },
+  { id: 'v2', tp: 'TP1', phase: 'Vorbereitung', wer: 'auto', was: 'Buchungsbestaetigung & AVV senden', wo: 'n8n + E-Mail', dauer: 'Automatisch', details: 'AVV nach Art. 28 DSGVO, Terminbestaetigung, Upload-Link (Digital) oder Reiseinfos (Vor-Ort)', tagLabel: 'Tag -7', digital: true, vorOrt: true },
+  { id: 'v3', tp: 'TP1', phase: 'Vorbereitung', wer: 'nadja', was: 'Vertrag & AVV pruefen', wo: 'E-Mail / Zoho', dauer: '15 Min', details: 'AVV-Ruecklauf kontrollieren, Rechnung vorbereiten', tagLabel: 'Tag -5', digital: true, vorOrt: true },
+  { id: 'v4', tp: 'TP1', phase: 'Vorbereitung', wer: 'auto', was: 'Fragebogen an Salon senden', wo: 'n8n + Typeform', dauer: 'Automatisch', details: 'Harte Fakten (~15 Min) + Weiche Faktoren (~20 Min) — Salon fuellt selbst aus', tagLabel: 'Tag -5', digital: true, vorOrt: true },
+  { id: 'v5', tp: 'TP1', phase: 'Vorbereitung', wer: 'ki', was: 'Salon-Daten vorab analysieren', wo: 'Supabase + KI', dauer: '15 Min auto', details: 'Stammdata-Review, Umsatztrends, Teamstruktur, Fragebogen-Auswertung', tagLabel: 'Tag -2', digital: true, vorOrt: true },
+  { id: 'v6', tp: 'TP1', phase: 'Vorbereitung', wer: 'tobias', was: 'Analyse-Framework vorbereiten', wo: 'Notion / Templates', dauer: '30-60 Min', details: 'SpeedUp360 Agent Analyse-Basis, 6-KF-Scoring-Bogen, Interview-Leitfaden, Materialien checken', tagLabel: 'Tag -1', digital: true, vorOrt: true, digitalVariante: 'Zoom-Link erstellen, Daten pruefen' },
+  { id: 'v6b', tp: 'TP1', phase: 'Vorbereitung', wer: 'tobias', was: 'Reiselogistik planen', wo: 'Vor Ort', dauer: '15 Min', details: 'Anfahrt, Hotel falls noetig, Zeitplanung 6h-Block', tagLabel: 'Tag -1', digital: false, vorOrt: true },
+
+  // TP2: Analyse (Kernleistung)
+  { id: 'a1', tp: 'TP2', phase: 'Analyse', wer: 'tobias', was: 'Salon-Rundgang & Team kennenlernen', wo: 'Im Salon', dauer: '60 Min', details: 'Erste Eindruecke, Atmosphaere-Notizen, Teamdynamik beobachten, Small Talk', tagLabel: 'Tag 0 — Std. 1', digital: false, vorOrt: true },
+  { id: 'a1d', tp: 'TP2', phase: 'Analyse', wer: 'ki', was: 'Kassendaten automatisch auswerten', wo: 'KI-Pipeline', dauer: '30 Min auto', details: 'OCR-Extraktion aus CSV/PDF, Klassifikation (BWA/Preisliste/MA), Daten in Supabase', tagLabel: 'Tag 0', digital: true, vorOrt: false },
+  { id: 'a2', tp: 'TP2', phase: 'Analyse', wer: 'tobias', was: 'Interview Inhaber', wo: 'Im Salon / Zoom', dauer: '45-60 Min', details: 'Leitfaden-Interview: Ziele, Probleme, Geschichte, Vision. Pain Points identifizieren', tagLabel: 'Tag 0 — Std. 2', digital: true, vorOrt: true, digitalVariante: 'Video-Call statt vor Ort' },
+  { id: 'a3', tp: 'TP2', phase: 'Analyse', wer: 'tobias', was: 'KF1-3 Analyse (Strategie, Marketing, Kunden)', wo: 'Im Salon / Zoom', dauer: '60 Min', details: 'Positionierungs-Clarity pruefen, Social Media & Google checken, Service-Gaps identifizieren', tagLabel: 'Tag 0 — Std. 3', digital: true, vorOrt: true, digitalVariante: 'Datenbasiert statt Beobachtung' },
+  { id: 'a4', tp: 'TP2', phase: 'Analyse', wer: 'tobias', was: 'KF4-6 Analyse (Fuehrung, Wirtschaft, Prozesse)', wo: 'Im Salon / Zoom', dauer: '60 Min', details: 'Delegations-Gaps, Personalquote, Prozess-Walkthrough, BWA-Tiefenanalyse', tagLabel: 'Tag 0 — Std. 4', digital: true, vorOrt: true, digitalVariante: 'BWA + KPI-Upload auswerten' },
+  { id: 'a5', tp: 'TP2', phase: 'Analyse', wer: 'tobias', was: 'Kassendaten-Review & Preisanalyse', wo: 'Im Salon', dauer: '60 Min', details: 'IST-Minutenpreis berechnen, Preisstruktur-Gaps, Rechencheck mit BWA', tagLabel: 'Tag 0 — Std. 5', digital: false, vorOrt: true },
+  { id: 'a6', tp: 'TP2', phase: 'Analyse', wer: 'tobias', was: 'Zusammenfassung & Quick-Wins teilen', wo: 'Im Salon', dauer: '60 Min', details: 'Erste Erkenntnisse praesentieren, Fragen beantworten, Erwartungen fuer Bericht setzen', tagLabel: 'Tag 0 — Std. 6', digital: false, vorOrt: true },
+  { id: 'a6d', tp: 'TP2', phase: 'Analyse', wer: 'tobias', was: 'KI-Ergebnisse validieren & ergaenzen', wo: 'Dashboard', dauer: '30-45 Min', details: 'Automatische Auswertung pruefen, fehlende Daten ergaenzen, Kontext hinzufuegen', tagLabel: 'Tag 0', digital: true, vorOrt: false },
+
+  // TP3: Berichterstellung
+  { id: 'b1', tp: 'TP3', phase: 'Berichterstellung', wer: 'tobias', was: 'Voice-Einsprache / Notizen digitalisieren', wo: 'Voice-Memo / App', dauer: '15 Min', details: 'Alle Erkenntnisse, Stichpunkte, Einschaetzungen per Voice oder Text festhalten', tagLabel: 'Tag 1', digital: true, vorOrt: true, digitalVariante: 'Notizen aus Video-Call zusammenfassen' },
+  { id: 'b2', tp: 'TP3', phase: 'Berichterstellung', wer: 'ki', was: 'Komplette KI-Analyse durchfuehren', wo: 'KI-Pipeline (Hetzner)', dauer: '30-45 Min auto', details: 'SpeedUp360 Agent: 6-KF-Scoring + Gap-Analyse + Radar-Chart | BWA Agent: Kennzahlen-Ampel | Preiskalkulation Agent: Minutenpreis | Positionierungs-Agent: USP', tagLabel: 'Tag 1', digital: true, vorOrt: true },
+  { id: 'b3', tp: 'TP3', phase: 'Berichterstellung', wer: 'tobias', was: 'Berater-Review & Freigabe', wo: 'Dashboard', dauer: '30 Min', details: 'KI-Ergebnis korrigieren, Kontext ergaenzen, Benchmark validieren, Bericht freigeben', tagLabel: 'Tag 1-2', digital: true, vorOrt: true },
+  { id: 'b4', tp: 'TP3', phase: 'Berichterstellung', wer: 'ki', was: 'PDF-Bericht generieren', wo: 'DocGen', dauer: '5 Min auto', details: 'Corporate-Design Bericht (20-25 Seiten): Radar-Chart, KF-Scores, Gap-Matrix, Massnahmenvorschlaege', tagLabel: 'Tag 2', digital: true, vorOrt: true },
+
+  // TP4: Massnahmenplan
+  { id: 'm1', tp: 'TP4', phase: 'Massnahmenplan', wer: 'joern', was: 'Top-3-Massnahmen auswählen', wo: 'Intern', dauer: '30 Min', details: 'Hoechster Impact x Machbarkeit, Verantwortungsmatrix (Salon/Salonimpuls/Extern), Realitaetscheck', tagLabel: 'Tag 2-3', digital: true, vorOrt: true },
+  { id: 'm2', tp: 'TP4', phase: 'Massnahmenplan', wer: 'joern', was: 'KPI-Definition & 90-Tage-Plan erstellen', wo: 'Intern / Zoho', dauer: '30 Min', details: 'Finanzielle + operative + qualitative KPIs, Meilensteine Woche 1-4, 5-8, 9-12', tagLabel: 'Tag 3', digital: true, vorOrt: true },
+  { id: 'm3', tp: 'TP4', phase: 'Massnahmenplan', wer: 'katrin', was: 'QA & Freigabe Massnahmenplan', wo: 'Intern', dauer: '15 Min', details: 'Plausibilitaet pruefen, Delivery-Kapazitaet sicherstellen', tagLabel: 'Tag 3', digital: true, vorOrt: true },
+
+  // TP5: Abschlussgespraech
+  { id: 'g1', tp: 'TP5', phase: 'Abschlussgespraech', wer: 'joern', was: 'Einstieg & Vertrauensaufbau', wo: 'Zoom / Vor-Ort', dauer: '10 Min', details: 'Persoenliche Begruessung. Bericht NICHT vorab zeigen! Rapport aufbauen, offene Atmosphaere', tagLabel: 'Tag 5-7', digital: true, vorOrt: true, digitalVariante: 'Video-Call (Zoom)' },
+  { id: 'g2', tp: 'TP5', phase: 'Abschlussgespraech', wer: 'joern', was: 'Analyse-Praesentation', wo: 'Zoom / Vor-Ort', dauer: '25 Min', details: 'Screen-Sharing: Radar-Chart, Kennzahlen, Benchmark. Reaktionen des Inhabers beobachten', tagLabel: 'Tag 5-7', digital: true, vorOrt: true },
+  { id: 'g3', tp: 'TP5', phase: 'Abschlussgespraech', wer: 'joern', was: 'Ziele & Vision erarbeiten', wo: 'Zoom / Vor-Ort', dauer: '20 Min', details: '"Was wollen Sie wirklich erreichen?" — 3x "Warum?" fragen. Verstehen, nicht analysieren', tagLabel: 'Tag 5-7', digital: true, vorOrt: true },
+  { id: 'g4', tp: 'TP5', phase: 'Abschlussgespraech', wer: 'joern', was: 'Massnahmenplan priorisieren', wo: 'Zoom / Vor-Ort', dauer: '20 Min', details: 'Top 3-5 gemeinsam priorisieren. KI-Vorschlaege zeigen, Inhaber entscheidet', tagLabel: 'Tag 5-7', digital: true, vorOrt: true },
+  { id: 'g5', tp: 'TP5', phase: 'Abschlussgespraech', wer: 'joern', was: 'Umsetzungsbegleitung empfehlen', wo: 'Zoom / Vor-Ort', dauer: '10 Min', details: 'Passendes SI-Paket authentisch empfehlen (Coaching / Campus / Master). Kein Druck!', tagLabel: 'Tag 5-7', digital: true, vorOrt: true },
+
+  // TP6: Folgeangebot & Follow-up
+  { id: 'f1', tp: 'TP6', phase: 'Folgeangebot', wer: 'auto', was: 'Bericht + Massnahmenplan per E-Mail', wo: 'n8n + E-Mail', dauer: '< 2h auto', details: 'Automatischer Versand nach Gespraechsende. PDF-Bericht + Massnahmenplan als Attachment', tagLabel: 'Tag 5-7', digital: true, vorOrt: true },
+  { id: 'f2', tp: 'TP6', phase: 'Folgeangebot', wer: 'auto', was: 'Angebot automatisch generieren', wo: 'n8n + Zoho', dauer: '< 4h auto', details: 'Basierend auf Persona + Massnahmen: Quick Fix = Coaching / Breit = Campus+Coaching / Lang = Master', tagLabel: 'Tag 5-7', digital: true, vorOrt: true },
+  { id: 'f3', tp: 'TP6', phase: 'Folgeangebot', wer: 'joern', was: 'Angebot finalisieren & senden', wo: 'Zoho / E-Mail', dauer: '15 Min', details: 'Automatisch generiertes Angebot pruefen, personalisieren, an Kunden senden', tagLabel: 'Tag 6-8', digital: true, vorOrt: true },
+  { id: 'f4', tp: 'TP6', phase: 'Folgeangebot', wer: 'cs', was: 'Follow-up Call: Fragen zum Angebot', wo: 'Telefon', dauer: '15 Min', details: 'Lea/Simone rufen an: Bericht verstanden? Fragen? Unklarheiten zum Angebot?', tagLabel: 'Tag 8-10', digital: true, vorOrt: true },
+  { id: 'f5', tp: 'TP6', phase: 'Folgeangebot', wer: 'nadja', was: 'Vertrag & Rechnung bei Zusage', wo: 'E-Mail / Zoho', dauer: '30 Min', details: 'Bei "Ja": Vertrag erstellen, Rechnung stellen, Kickoff-Termin planen', tagLabel: 'Bei Zusage', digital: true, vorOrt: true },
+
+  // Follow-up Phase
+  { id: 'fu1', tp: 'Follow-up', phase: 'Follow-up', wer: 'auto', was: 'Reminder + WhatsApp Impuls', wo: 'n8n + WA API', dauer: 'Automatisch', details: '"Wie laeuft die Umsetzung?" — Automatischer Check-in bei offenen Angeboten', tagLabel: 'Tag 14', digital: true, vorOrt: true },
+  { id: 'fu2', tp: 'Follow-up', phase: 'Follow-up', wer: 'auto', was: 'Follow-up Termin automatisch buchen', wo: 'Cal.com + n8n', dauer: 'Automatisch', details: 'Automatisch gebuchter Termin: Umsetzungsstatus pruefen, Blockaden loesen', tagLabel: 'Tag 30', digital: true, vorOrt: true },
+  { id: 'fu3', tp: 'Follow-up', phase: 'Follow-up', wer: 'cs', was: 'Umsetzungsbegleitung aktiv', wo: 'Telefon / Zoom', dauer: '30 Min', details: 'Lea/Simone: Was wurde umgesetzt? Wo hakt es? Braucht der Salon mehr Unterstuetzung?', tagLabel: 'Tag 30-60', digital: true, vorOrt: true },
+  { id: 'fu4', tp: 'Follow-up', phase: 'Follow-up', wer: 'auto', was: 'Wirkungsmessung anstossen', wo: 'n8n + Fragebogen', dauer: 'Automatisch', details: 'Fragebogen an Salon: Bon vorher/nachher, Rebooking, Umsatz. ROI berechnen', tagLabel: 'Tag 90', digital: true, vorOrt: true },
+  { id: 'fu5', tp: 'Follow-up', phase: 'Follow-up', wer: 'auto', was: 'Reaktivierung bei Inaktivitaet', wo: 'n8n + E-Mail', dauer: 'Automatisch', details: 'E-Mail-Sequenz: "Wir haben noch nicht gehoert..." — Erneute Diagnose anbieten', tagLabel: 'Tag 180+', digital: true, vorOrt: true },
+]
+
+const phasenFarben: Record<string, { bg: string; border: string; text: string; headerBg: string }> = {
+  'Vorbereitung': { bg: 'bg-indigo-50', border: 'border-indigo-300', text: 'text-indigo-700', headerBg: 'bg-indigo-100' },
+  'Analyse': { bg: 'bg-blue-50', border: 'border-blue-300', text: 'text-blue-700', headerBg: 'bg-blue-100' },
+  'Berichterstellung': { bg: 'bg-emerald-50', border: 'border-emerald-300', text: 'text-emerald-700', headerBg: 'bg-emerald-100' },
+  'Massnahmenplan': { bg: 'bg-amber-50', border: 'border-amber-300', text: 'text-amber-700', headerBg: 'bg-amber-100' },
+  'Abschlussgespraech': { bg: 'bg-violet-50', border: 'border-violet-300', text: 'text-violet-700', headerBg: 'bg-violet-100' },
+  'Folgeangebot': { bg: 'bg-pink-50', border: 'border-pink-300', text: 'text-pink-700', headerBg: 'bg-pink-100' },
+  'Follow-up': { bg: 'bg-gray-50', border: 'border-gray-300', text: 'text-gray-700', headerBg: 'bg-gray-100' },
+}
+
+function AblaufTab() {
+  const [variante, setVariante] = useState<'digital' | 'vorOrt'>('digital')
+  const [expandedPhase, setExpandedPhase] = useState<string | null>(null)
+
+  const filteredSchritte = prozessSchritte.filter(s =>
+    variante === 'digital' ? s.digital : s.vorOrt
+  )
+
+  const phasen = [...new Set(filteredSchritte.map(s => s.phase))]
+
+  const getRolle = (id: string) => swimlaneRollen.find(r => r.id === id)
+
+  return (
+    <div className="space-y-6">
+      {/* Header mit Toggle */}
+      <Card className="border-l-4 border-l-cyan-500">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <GitBranch className="w-5 h-5 text-cyan-500" />
+                Ablaufplan — Wer macht Wann Was Wo
+              </CardTitle>
+              <CardDescription>Kompletter Prozess von Lead bis Wirkungsmessung</CardDescription>
+            </div>
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setVariante('digital')}
+                className={`px-4 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                  variante === 'digital'
+                    ? 'bg-emerald-500 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <Laptop className="w-3.5 h-3.5" />
+                Digital (990 EUR)
+              </button>
+              <button
+                onClick={() => setVariante('vorOrt')}
+                className={`px-4 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                  variante === 'vorOrt'
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <Home className="w-3.5 h-3.5" />
+                Vor-Ort (2.500 EUR)
+              </button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4 text-xs">
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-gray-500">Gesamtdauer:</span>
+              <strong>{variante === 'digital' ? '~3-4h Berater + 90 Tage Follow-up' : '~12-16h (1.5-2 Tage) + 90 Tage Follow-up'}</strong>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-gray-500">Beteiligte:</span>
+              <strong>{variante === 'digital' ? '6 Rollen + KI-Agents' : '7 Rollen + KI-Agents'}</strong>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <PlayCircle className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-gray-500">Schritte:</span>
+              <strong>{filteredSchritte.length} Aktivitaeten</strong>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Rollen-Legende */}
+      <div className="flex flex-wrap gap-2">
+        {swimlaneRollen.map(r => (
+          <div key={r.id} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${r.border} ${r.lightBg}`}>
+            <div className={`w-2 h-2 rounded-full ${r.color}`} />
+            <span className={`text-[10px] font-medium ${r.text}`}>{r.name}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Phasen-Swimlanes */}
+      {phasen.map(phase => {
+        const farbe = phasenFarben[phase] || phasenFarben['Follow-up']
+        const phasenSchritte = filteredSchritte.filter(s => s.phase === phase)
+        const isExpanded = expandedPhase === phase
+        const tp = phasenSchritte[0]?.tp || ''
+
+        return (
+          <div key={phase} className={`border rounded-xl overflow-hidden ${farbe.border}`}>
+            {/* Phase Header */}
+            <button
+              onClick={() => setExpandedPhase(isExpanded ? null : phase)}
+              className={`w-full flex items-center justify-between px-4 py-3 ${farbe.headerBg} hover:brightness-95 transition-all`}
+            >
+              <div className="flex items-center gap-3">
+                <Badge className={`${farbe.bg} ${farbe.text} border ${farbe.border} text-[10px]`}>{tp}</Badge>
+                <span className={`font-semibold text-sm ${farbe.text}`}>{phase}</span>
+                <span className="text-xs text-gray-500">{phasenSchritte.length} Schritte</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] text-gray-500 font-mono">
+                  {phasenSchritte[0]?.tagLabel} — {phasenSchritte[phasenSchritte.length - 1]?.tagLabel}
+                </span>
+                <ChevronRight className={`w-4 h-4 ${farbe.text} transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+              </div>
+            </button>
+
+            {/* Phase Content */}
+            {isExpanded && (
+              <div className={`${farbe.bg} divide-y ${farbe.border}`}>
+                {phasenSchritte.map((schritt, idx) => {
+                  const rolle = getRolle(schritt.wer)
+                  if (!rolle) return null
+                  return (
+                    <div key={schritt.id} className="px-4 py-3 hover:bg-white/50 transition-colors">
+                      <div className="flex items-start gap-3">
+                        {/* Schritt-Nummer */}
+                        <div className="flex flex-col items-center shrink-0">
+                          <div className={`w-7 h-7 rounded-full ${rolle.color} text-white flex items-center justify-center text-[10px] font-bold`}>
+                            {idx + 1}
+                          </div>
+                          {idx < phasenSchritte.length - 1 && <div className="w-0.5 h-4 bg-gray-200 mt-1" />}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium text-gray-900">{schritt.was}</span>
+                            {schritt.digitalVariante && variante === 'digital' && (
+                              <Badge variant="outline" className="text-[9px] bg-emerald-50 text-emerald-600 border-emerald-200">
+                                Digital: {schritt.digitalVariante}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-0.5">{schritt.details}</p>
+
+                          {/* Meta-Infos */}
+                          <div className="flex flex-wrap gap-3 mt-2">
+                            <div className={`flex items-center gap-1 px-2 py-0.5 rounded ${rolle.lightBg} border ${rolle.border}`}>
+                              <div className={`w-1.5 h-1.5 rounded-full ${rolle.color}`} />
+                              <span className={`text-[10px] font-medium ${rolle.text}`}>{rolle.name}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                              <MapPin className="w-3 h-3" />
+                              {schritt.wo}
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                              <Clock className="w-3 h-3" />
+                              {schritt.dauer}
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] font-mono text-gray-400">
+                              <Calendar className="w-3 h-3" />
+                              {schritt.tagLabel}
+                            </div>
+                          </div>
+
+                          {/* Handoff */}
+                          {schritt.handoff && (
+                            <div className="mt-2 flex items-center gap-1.5 text-[10px] text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-200">
+                              <Send className="w-3 h-3" />
+                              <strong>Handoff:</strong> {schritt.handoff}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )
+      })}
+
+      {/* Zusammenfassungs-Karte */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-cyan-500" />
+            Zusammenfassung — {variante === 'digital' ? 'Digital' : 'Vor-Ort'} Variante
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs">Rolle</TableHead>
+                <TableHead className="text-xs">Aufgaben</TableHead>
+                <TableHead className="text-xs">Zeitaufwand</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {swimlaneRollen.map(rolle => {
+                const rollenSchritte = filteredSchritte.filter(s => s.wer === rolle.id)
+                if (rollenSchritte.length === 0) return null
+                const isAutomatic = rollenSchritte.every(s => s.dauer.includes('auto') || s.dauer.includes('Automatisch'))
+                return (
+                  <TableRow key={rolle.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2.5 h-2.5 rounded-full ${rolle.color}`} />
+                        <span className="text-xs font-medium">{rolle.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs text-gray-600">{rollenSchritte.length} Aktivitaeten</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={`text-[10px] ${isAutomatic ? 'bg-green-50 text-green-700' : ''}`}>
+                        {isAutomatic ? 'Automatisiert' : `${rollenSchritte.length} manuelle Schritte`}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 /* ───────────────────── MAIN APP ───────────────────── */
 
 export default function App() {
@@ -1005,12 +1322,16 @@ export default function App() {
             <TabsTrigger value="prozess" className="text-xs gap-1.5 data-[state=active]:bg-teal-50 data-[state=active]:text-teal-700">
               <ClipboardList className="w-3.5 h-3.5" /> Prozesslogik
             </TabsTrigger>
+            <TabsTrigger value="ablauf" className="text-xs gap-1.5 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-700">
+              <GitBranch className="w-3.5 h-3.5" /> Ablaufplan
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="konzept"><KonzeptTab /></TabsContent>
           <TabsContent value="produkte"><ProdukteTab /></TabsContent>
           <TabsContent value="crm"><CRMTab /></TabsContent>
           <TabsContent value="prozess"><ProzessTab /></TabsContent>
+          <TabsContent value="ablauf"><AblaufTab /></TabsContent>
         </Tabs>
       </main>
 

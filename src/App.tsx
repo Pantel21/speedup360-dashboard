@@ -1067,6 +1067,11 @@ function AblaufTab() {
   const phasen = [...new Set(filteredSchritte.map(s => s.phase))]
 
   const getRolle = (id: string) => swimlaneRollen.find(r => r.id === id)
+  const isAutomated = (schritt: ProzessSchritt) => schritt.wer === 'ki' || schritt.wer === 'auto'
+
+  // Farben: Gruen fuer automatisiert, einheitlich Slate fuer manuell
+  const autoStyle = { circle: 'bg-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', dot: 'bg-emerald-500', rowBg: 'bg-emerald-50/60' }
+  const manualStyle = { circle: 'bg-slate-500', bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-700', dot: 'bg-slate-400', rowBg: 'bg-white' }
 
   return (
     <div className="space-y-6">
@@ -1125,18 +1130,26 @@ function AblaufTab() {
               <strong>{filteredSchritte.length} Aktivitaeten</strong>
             </div>
           </div>
+          {/* Legende: Automatisiert vs. Manuell */}
+          <div className="flex items-center gap-6 mt-4 pt-3 border-t border-gray-200">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                <Bot className="w-3 h-3 text-white" />
+              </div>
+              <span className="text-xs font-medium text-emerald-700">Automatisiert (KI / n8n)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-slate-500 flex items-center justify-center">
+                <Users className="w-3 h-3 text-white" />
+              </div>
+              <span className="text-xs font-medium text-slate-700">Manuell (Person)</span>
+            </div>
+            <div className="ml-auto text-[10px] text-gray-400">
+              {filteredSchritte.filter(s => isAutomated(s)).length} automatisiert / {filteredSchritte.filter(s => !isAutomated(s)).length} manuell
+            </div>
+          </div>
         </CardContent>
       </Card>
-
-      {/* Rollen-Legende */}
-      <div className="flex flex-wrap gap-2">
-        {swimlaneRollen.map(r => (
-          <div key={r.id} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${r.border} ${r.lightBg}`}>
-            <div className={`w-2 h-2 rounded-full ${r.color}`} />
-            <span className={`text-[10px] font-medium ${r.text}`}>{r.name}</span>
-          </div>
-        ))}
-      </div>
 
       {/* Phasen-Swimlanes */}
       {phasen.map(phase => {
@@ -1144,6 +1157,8 @@ function AblaufTab() {
         const phasenSchritte = filteredSchritte.filter(s => s.phase === phase)
         const isExpanded = expandedPhase === phase
         const tp = phasenSchritte[0]?.tp || ''
+        const autoCount = phasenSchritte.filter(s => isAutomated(s)).length
+        const manualCount = phasenSchritte.length - autoCount
 
         return (
           <div key={phase} className={`border rounded-xl overflow-hidden ${farbe.border}`}>
@@ -1155,7 +1170,14 @@ function AblaufTab() {
               <div className="flex items-center gap-3">
                 <Badge className={`${farbe.bg} ${farbe.text} border ${farbe.border} text-[10px]`}>{tp}</Badge>
                 <span className={`font-semibold text-sm ${farbe.text}`}>{phase}</span>
-                <span className="text-xs text-gray-500">{phasenSchritte.length} Schritte</span>
+                <div className="flex items-center gap-1.5">
+                  {autoCount > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">{autoCount} auto</span>
+                  )}
+                  {manualCount > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">{manualCount} manuell</span>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-[10px] text-gray-500 font-mono">
@@ -1167,17 +1189,19 @@ function AblaufTab() {
 
             {/* Phase Content */}
             {isExpanded && (
-              <div className={`${farbe.bg} divide-y ${farbe.border}`}>
+              <div className="divide-y divide-gray-100">
                 {phasenSchritte.map((schritt, idx) => {
                   const rolle = getRolle(schritt.wer)
                   if (!rolle) return null
+                  const auto = isAutomated(schritt)
+                  const style = auto ? autoStyle : manualStyle
                   return (
-                    <div key={schritt.id} className="px-4 py-3 hover:bg-white/50 transition-colors">
+                    <div key={schritt.id} className={`px-4 py-3 ${style.rowBg} hover:brightness-[0.98] transition-colors`}>
                       <div className="flex items-start gap-3">
                         {/* Schritt-Nummer */}
                         <div className="flex flex-col items-center shrink-0">
-                          <div className={`w-7 h-7 rounded-full ${rolle.color} text-white flex items-center justify-center text-[10px] font-bold`}>
-                            {idx + 1}
+                          <div className={`w-7 h-7 rounded-full ${style.circle} text-white flex items-center justify-center text-[10px] font-bold`}>
+                            {auto ? <Bot className="w-3.5 h-3.5" /> : idx + 1}
                           </div>
                           {idx < phasenSchritte.length - 1 && <div className="w-0.5 h-4 bg-gray-200 mt-1" />}
                         </div>
@@ -1185,9 +1209,14 @@ function AblaufTab() {
                         {/* Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium text-gray-900">{schritt.was}</span>
+                            <span className={`text-sm font-medium ${auto ? 'text-emerald-800' : 'text-gray-900'}`}>{schritt.was}</span>
+                            {auto && (
+                              <Badge className="text-[9px] bg-emerald-100 text-emerald-700 border border-emerald-200">
+                                Automatisiert
+                              </Badge>
+                            )}
                             {schritt.digitalVariante && variante === 'digital' && (
-                              <Badge variant="outline" className="text-[9px] bg-emerald-50 text-emerald-600 border-emerald-200">
+                              <Badge variant="outline" className="text-[9px] bg-cyan-50 text-cyan-600 border-cyan-200">
                                 Digital: {schritt.digitalVariante}
                               </Badge>
                             )}
@@ -1196,15 +1225,15 @@ function AblaufTab() {
 
                           {/* Meta-Infos */}
                           <div className="flex flex-wrap gap-3 mt-2">
-                            <div className={`flex items-center gap-1 px-2 py-0.5 rounded ${rolle.lightBg} border ${rolle.border}`}>
-                              <div className={`w-1.5 h-1.5 rounded-full ${rolle.color}`} />
-                              <span className={`text-[10px] font-medium ${rolle.text}`}>{rolle.name}</span>
+                            <div className={`flex items-center gap-1 px-2 py-0.5 rounded ${style.bg} border ${style.border}`}>
+                              <div className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                              <span className={`text-[10px] font-medium ${style.text}`}>{rolle.name}</span>
                             </div>
                             <div className="flex items-center gap-1 text-[10px] text-gray-500">
                               <MapPin className="w-3 h-3" />
                               {schritt.wo}
                             </div>
-                            <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                            <div className={`flex items-center gap-1 text-[10px] ${auto ? 'text-emerald-600 font-medium' : 'text-gray-500'}`}>
                               <Clock className="w-3 h-3" />
                               {schritt.dauer}
                             </div>
@@ -1232,45 +1261,66 @@ function AblaufTab() {
         )
       })}
 
-      {/* Zusammenfassungs-Karte */}
+      {/* Zusammenfassungs-Karte: Manueller Aufwand pro Person */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-cyan-500" />
-            Zusammenfassung — {variante === 'digital' ? 'Digital' : 'Vor-Ort'} Variante
+            Manueller Aufwand pro Person — {variante === 'digital' ? 'Digital' : 'Vor-Ort'}
           </CardTitle>
+          <CardDescription>Nur manuelle Schritte — automatisierte Schritte sind nicht enthalten</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-xs">Rolle</TableHead>
-                <TableHead className="text-xs">Aufgaben</TableHead>
-                <TableHead className="text-xs">Zeitaufwand</TableHead>
+                <TableHead className="text-xs">Person / Rolle</TableHead>
+                <TableHead className="text-xs">Typ</TableHead>
+                <TableHead className="text-xs">Anzahl Schritte</TableHead>
+                <TableHead className="text-xs">Aktivitaeten</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {swimlaneRollen.map(rolle => {
                 const rollenSchritte = filteredSchritte.filter(s => s.wer === rolle.id)
                 if (rollenSchritte.length === 0) return null
-                const isAutomatic = rollenSchritte.every(s => s.dauer.includes('auto') || s.dauer.includes('Automatisch'))
+                const auto = rolle.id === 'ki' || rolle.id === 'auto'
                 return (
-                  <TableRow key={rolle.id}>
+                  <TableRow key={rolle.id} className={auto ? 'bg-emerald-50/50' : ''}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <div className={`w-2.5 h-2.5 rounded-full ${rolle.color}`} />
+                        <div className={`w-2.5 h-2.5 rounded-full ${auto ? 'bg-emerald-500' : 'bg-slate-500'}`} />
                         <span className="text-xs font-medium">{rolle.name}</span>
+                        <span className="text-[10px] text-gray-400">({rolle.rolle})</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-gray-600">{rollenSchritte.length} Aktivitaeten</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={`text-[10px] ${isAutomatic ? 'bg-green-50 text-green-700' : ''}`}>
-                        {isAutomatic ? 'Automatisiert' : `${rollenSchritte.length} manuelle Schritte`}
+                      <Badge className={`text-[10px] ${auto ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>
+                        {auto ? 'Automatisiert' : 'Manuell'}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`text-sm font-bold ${auto ? 'text-emerald-600' : 'text-slate-700'}`}>{rollenSchritte.length}</span>
+                    </TableCell>
+                    <TableCell className="text-[10px] text-gray-500 max-w-xs">
+                      {rollenSchritte.map(s => s.was).join(' · ')}
                     </TableCell>
                   </TableRow>
                 )
               })}
+              {/* Summenzeile */}
+              <TableRow className="border-t-2 border-gray-300 font-bold">
+                <TableCell className="text-xs">Gesamt</TableCell>
+                <TableCell />
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-700">{filteredSchritte.filter(s => !isAutomated(s)).length} manuell</span>
+                    <span className="text-[10px] text-gray-400">+</span>
+                    <span className="text-sm text-emerald-600">{filteredSchritte.filter(s => isAutomated(s)).length} auto</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-[10px] text-gray-400">= {filteredSchritte.length} Schritte total</TableCell>
+              </TableRow>
             </TableBody>
           </Table>
         </CardContent>

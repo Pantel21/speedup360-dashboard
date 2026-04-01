@@ -57,3 +57,122 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ──────────── PRINT STYLES ──────────── */
+@media print {
+  /* Seiteneinstellungen */
+  @page {
+    size: A4;
+    margin: 15mm 12mm 15mm 12mm;
+  }
+
+  /* Hintergrund und Basis */
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 10pt !important;
+  }
+
+  /* Elemente ausblenden die nicht gedruckt werden sollen */
+  .no-print,
+  [data-print-hide="true"] {
+    display: none !important;
+  }
+
+  /* Header sticky aufheben */
+  header {
+    position: relative !important;
+    border-bottom: 2px solid #1e3a5f !important;
+  }
+
+  /* Tabs-Navigation ausblenden */
+  [role="tablist"] {
+    display: none !important;
+  }
+
+  /* Schatten und Hover-Effekte entfernen */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Alle Cards sollen nicht brechen */
+  .print-no-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Seitenumbruch VOR jeder Phase */
+  .print-phase-break {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  /* Erste Phase kein Break */
+  .print-phase-break:first-of-type {
+    break-before: auto !important;
+    page-break-before: auto !important;
+  }
+
+  /* Zusammenfassungs-Tabelle auf neue Seite */
+  .print-summary-break {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  /* Schritt-Zeilen nicht brechen */
+  .print-step {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Max-Breite aufheben */
+  .max-w-7xl {
+    max-width: 100% !important;
+  }
+
+  /* Hintergrundfarben druckbar machen */
+  .bg-emerald-50\/60,
+  .bg-emerald-50,
+  .bg-emerald-100,
+  .bg-indigo-100,
+  .bg-blue-100,
+  .bg-amber-100,
+  .bg-violet-100,
+  .bg-pink-100,
+  .bg-gray-100 {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Print-Footer auf jeder Seite */
+  .print-footer {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 8pt;
+    color: #999;
+    border-top: 1px solid #ddd;
+    padding-top: 4px;
+  }
+
+  /* Anleitung-Boxen kompakt drucken */
+  .print-step .rounded-lg.border.bg-white {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+
+  /* Links nicht als URL drucken */
+  a::after {
+    content: none !important;
+  }
+
+  /* Footer am Ende */
+  footer {
+    break-before: avoid !important;
+  }
+}

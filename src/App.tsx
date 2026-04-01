@@ -16,7 +16,7 @@ import {
   Workflow, Bell, UserCheck, ShoppingCart, Activity, Gauge,
   ChevronRight, Star, Building2, Sparkles,
   GitBranch, Calendar, Send,
-  Laptop, Home, PlayCircle
+  Laptop, Home, PlayCircle, Printer
 } from 'lucide-react'
 
 /* ───────────────────────── DATA ───────────────────────── */
@@ -1444,6 +1444,7 @@ function AblaufTab() {
   const [variante, setVariante] = useState<'digital' | 'vorOrt'>('digital')
   const [expandedPhase, setExpandedPhase] = useState<string | null>(null)
   const [expandedStep, setExpandedStep] = useState<string | null>(null)
+  const [isPrintMode, setIsPrintMode] = useState(false)
 
   const filteredSchritte = prozessSchritte.filter(s =>
     variante === 'digital' ? s.digital : s.vorOrt
@@ -1454,12 +1455,33 @@ function AblaufTab() {
   const getRolle = (id: string) => swimlaneRollen.find(r => r.id === id)
   const isAutomated = (schritt: ProzessSchritt) => schritt.wer === 'ki' || schritt.wer === 'auto'
 
+  const handlePrint = () => {
+    setIsPrintMode(true)
+    // Kurz warten bis React gerendert hat, dann drucken
+    setTimeout(() => {
+      window.print()
+      // Nach dem Drucken wieder normal
+      setTimeout(() => setIsPrintMode(false), 500)
+    }, 300)
+  }
+
   // Farben: Gruen fuer automatisiert, einheitlich Slate fuer manuell
   const autoStyle = { circle: 'bg-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', dot: 'bg-emerald-500', rowBg: 'bg-emerald-50/60' }
   const manualStyle = { circle: 'bg-slate-500', bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-700', dot: 'bg-slate-400', rowBg: 'bg-white' }
 
   return (
     <div className="space-y-6">
+      {/* Print-only Titelseite */}
+      {isPrintMode && (
+        <div className="hidden print:block text-center py-8 border-b-2 border-gray-300 mb-4">
+          <h1 className="text-2xl font-bold text-gray-900">SpeedUp360 — Ablaufplan</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Variante: {variante === 'digital' ? 'Digital (990 EUR)' : 'Vor-Ort (2.500 EUR)'} — {filteredSchritte.length} Schritte — {filteredSchritte.filter(s => isAutomated(s)).length} automatisiert / {filteredSchritte.filter(s => !isAutomated(s)).length} manuell
+          </p>
+          <p className="text-xs text-gray-400 mt-2">Salonimpuls GmbH — Vertraulich — Stand: April 2026</p>
+        </div>
+      )}
+
       {/* Header mit Toggle */}
       <Card className="border-l-4 border-l-cyan-500">
         <CardHeader className="pb-3">
@@ -1471,29 +1493,45 @@ function AblaufTab() {
               </CardTitle>
               <CardDescription>Kompletter Prozess von Lead bis Wirkungsmessung</CardDescription>
             </div>
-            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1" data-print-hide="true">
+                <button
+                  onClick={() => setVariante('digital')}
+                  className={`px-4 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                    variante === 'digital'
+                      ? 'bg-emerald-500 text-white shadow-sm'
+                      : 'text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <Laptop className="w-3.5 h-3.5" />
+                  Digital (990 EUR)
+                </button>
+                <button
+                  onClick={() => setVariante('vorOrt')}
+                  className={`px-4 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                    variante === 'vorOrt'
+                      ? 'bg-blue-500 text-white shadow-sm'
+                      : 'text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <Home className="w-3.5 h-3.5" />
+                  Vor-Ort (2.500 EUR)
+                </button>
+              </div>
               <button
-                onClick={() => setVariante('digital')}
-                className={`px-4 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
-                  variante === 'digital'
-                    ? 'bg-emerald-500 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-200'
-                }`}
+                onClick={handlePrint}
+                data-print-hide="true"
+                className="px-3 py-2 rounded-md text-xs font-medium bg-gray-700 text-white hover:bg-gray-800 transition-colors flex items-center gap-1.5"
               >
-                <Laptop className="w-3.5 h-3.5" />
-                Digital (990 EUR)
+                <Printer className="w-3.5 h-3.5" />
+                Drucken
               </button>
-              <button
-                onClick={() => setVariante('vorOrt')}
-                className={`px-4 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
-                  variante === 'vorOrt'
-                    ? 'bg-blue-500 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                <Home className="w-3.5 h-3.5" />
-                Vor-Ort (2.500 EUR)
-              </button>
+            </div>
+            {/* Print-only Varianten-Anzeige */}
+            <div className="hidden print:block">
+              <Badge className="text-xs bg-gray-100 text-gray-700 border border-gray-300">
+                Variante: {variante === 'digital' ? 'Digital (990 EUR)' : 'Vor-Ort (2.500 EUR)'}
+              </Badge>
             </div>
           </div>
         </CardHeader>
@@ -1537,7 +1575,7 @@ function AblaufTab() {
       </Card>
 
       {/* Phasen-Swimlanes */}
-      {phasen.map(phase => {
+      {phasen.map((phase, phaseIdx) => {
         const farbe = phasenFarben[phase] || phasenFarben['Follow-up']
         const phasenSchritte = filteredSchritte.filter(s => s.phase === phase)
         const isExpanded = expandedPhase === phase
@@ -1546,7 +1584,7 @@ function AblaufTab() {
         const manualCount = phasenSchritte.length - autoCount
 
         return (
-          <div key={phase} className={`border rounded-xl overflow-hidden ${farbe.border}`}>
+          <div key={phase} className={`border rounded-xl overflow-hidden ${farbe.border} ${phaseIdx > 0 ? 'print-phase-break' : ''}`}>
             {/* Phase Header */}
             <button
               onClick={() => setExpandedPhase(isExpanded ? null : phase)}
@@ -1568,12 +1606,12 @@ function AblaufTab() {
                 <span className="text-[10px] text-gray-500 font-mono">
                   {phasenSchritte[0]?.tagLabel} — {phasenSchritte[phasenSchritte.length - 1]?.tagLabel}
                 </span>
-                <ChevronRight className={`w-4 h-4 ${farbe.text} transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                <ChevronRight className={`w-4 h-4 ${farbe.text} transition-transform ${isExpanded ? 'rotate-90' : ''} no-print`} />
               </div>
             </button>
 
             {/* Phase Content */}
-            {isExpanded && (
+            {(isExpanded || isPrintMode) && (
               <div className="divide-y divide-gray-100">
                 {phasenSchritte.map((schritt, idx) => {
                   const rolle = getRolle(schritt.wer)
@@ -1581,9 +1619,9 @@ function AblaufTab() {
                   const auto = isAutomated(schritt)
                   const style = auto ? autoStyle : manualStyle
                   const detail = schrittDetails[schritt.id]
-                  const isStepExpanded = expandedStep === schritt.id
+                  const isStepExpanded = expandedStep === schritt.id || isPrintMode
                   return (
-                    <div key={schritt.id} className={`px-4 py-3 ${style.rowBg} hover:brightness-[0.98] transition-colors`}>
+                    <div key={schritt.id} className={`px-4 py-3 ${style.rowBg} hover:brightness-[0.98] transition-colors print-step`}>
                       <div className="flex items-start gap-3">
                         {/* Schritt-Nummer — klickbar */}
                         <div className="flex flex-col items-center shrink-0">
@@ -1616,10 +1654,10 @@ function AblaufTab() {
                                 Digital: {schritt.digitalVariante}
                               </Badge>
                             )}
-                            {detail && (
+                            {detail && !isPrintMode && (
                               <button
                                 onClick={() => setExpandedStep(isStepExpanded ? null : schritt.id)}
-                                className={`text-[9px] px-1.5 py-0.5 rounded cursor-pointer transition-colors ${isStepExpanded ? 'bg-blue-200 text-blue-800' : 'bg-blue-50 text-blue-500 hover:bg-blue-100'}`}
+                                className={`text-[9px] px-1.5 py-0.5 rounded cursor-pointer transition-colors ${isStepExpanded ? 'bg-blue-200 text-blue-800' : 'bg-blue-50 text-blue-500 hover:bg-blue-100'} no-print`}
                               >
                                 {isStepExpanded ? 'Anleitung ausblenden ▲' : 'Anleitung anzeigen ▼'}
                               </button>
@@ -1694,7 +1732,7 @@ function AblaufTab() {
       })}
 
       {/* Zusammenfassungs-Karte: Manueller Aufwand pro Person */}
-      <Card>
+      <Card className="print-summary-break">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-cyan-500" />
